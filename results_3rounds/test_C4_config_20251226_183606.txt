@@ -1,0 +1,13 @@
+Experiment: test_C4
+Timestamp: 20251226_183606
+
+Configuration:
+strategy: FedAvg
+distribution: C4
+num_rounds: 3
+num_clients: 6
+fraction_train: 1.0
+fraction_evaluate: 1.0
+min_train_nodes: 6
+min_evaluate_nodes: 6
+learning_rate: 0.1

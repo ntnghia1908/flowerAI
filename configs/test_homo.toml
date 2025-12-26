@@ -1,0 +1,13 @@
+# Test Homogeneous (IID) - 10 rounds
+num-server-rounds = 50
+fraction-train = 1.0
+fraction-evaluate = 1.0
+min-train-nodes = 6
+min-evaluate-nodes = 6
+local-epochs = 1
+learning-rate = 0.1
+batch-size = 32
+strategy = "FedAvg"
+distribution = "homo"
+experiment-name = "test_homo"
+num-clients = 6

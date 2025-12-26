@@ -3,7 +3,10 @@
 import torch
 from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.serverapp import Grid, ServerApp
+from flwr.serverapp.strategy import FedAvg
+from flwr.common import ndarrays_to_parameters, parameters_to_ndarrays
 from copy import deepcopy
+from typing import List, Tuple, Dict, Optional
 
 from pytorchexample.task import Net, load_centralized_dataset
 from pytorchexample.metrics import calculate_metrics, calculate_weight_metrics
@@ -16,12 +19,73 @@ app = ServerApp()
 # Global variables for tracking
 previous_weights = None
 experiment_logger = None
+current_round = 0
+
+
+class CustomFedAvg(FedAvg):
+    """Custom FedAvg with client metrics logging."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def aggregate_fit(self, server_round, results, failures):
+        """Aggregate training results and log client metrics."""
+        global current_round, experiment_logger
+
+        # Update current round
+        current_round = server_round
+
+        # Log client training metrics
+        if experiment_logger is not None:
+            for idx, result_msg in enumerate(results):
+                # Extract metrics from Message
+                if hasattr(result_msg, 'content') and 'metrics' in result_msg.content:
+                    metrics = result_msg.content['metrics']
+                    client_metrics = {
+                        'loss': metrics.get('train_loss', 0.0),
+                        'accuracy': metrics.get('train_accuracy', 0.0),
+                        'precision': metrics.get('train_precision', 0.0),
+                        'recall': metrics.get('train_recall', 0.0),
+                        'f1': metrics.get('train_f1', 0.0),
+                        'num_examples': metrics.get('num-examples', 0)
+                    }
+                    experiment_logger.log_client_metrics(
+                        server_round, idx, 'train', client_metrics
+                    )
+
+        # Call parent aggregate_fit
+        return super().aggregate_fit(server_round, results, failures)
+
+    def aggregate_evaluate(self, server_round, results):
+        """Aggregate evaluation results and log client metrics."""
+        global current_round, experiment_logger
+
+        # Log client evaluation metrics
+        if experiment_logger is not None:
+            for idx, result_msg in enumerate(results):
+                # Extract metrics from Message
+                if hasattr(result_msg, 'content') and 'metrics' in result_msg.content:
+                    metrics = result_msg.content['metrics']
+                    client_metrics = {
+                        'loss': metrics.get('eval_loss', 0.0),
+                        'accuracy': metrics.get('eval_acc', 0.0),
+                        'precision': metrics.get('eval_precision', 0.0),
+                        'recall': metrics.get('eval_recall', 0.0),
+                        'f1': metrics.get('eval_f1', 0.0),
+                        'num_examples': metrics.get('num-examples', 0)
+                    }
+                    experiment_logger.log_client_metrics(
+                        server_round, idx, 'evaluate', client_metrics
+                    )
+
+        # Call parent aggregate_evaluate
+        return super().aggregate_evaluate(server_round, results)
 
 
 @app.main()
 def main(grid: Grid, context: Context) -> None:
     """Main entry point for experimental ServerApp with comprehensive logging."""
-    global previous_weights, experiment_logger
+    global previous_weights, experiment_logger, current_round
 
     # Read run config
     fraction_train: float = context.run_config.get("fraction-train", 1.0)
@@ -67,9 +131,8 @@ def main(grid: Grid, context: Context) -> None:
     arrays = ArrayRecord(global_model.state_dict())
     previous_weights = deepcopy(global_model.state_dict())
 
-    # Get strategy
-    strategy = get_strategy(
-        strategy_name=strategy_name,
+    # Use custom FedAvg strategy with client metrics logging
+    strategy = CustomFedAvg(
         fraction_train=fraction_train,
         fraction_evaluate=fraction_evaluate,
         min_train_nodes=min_train_nodes,
@@ -104,7 +167,10 @@ def main(grid: Grid, context: Context) -> None:
 
 def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
     """Evaluate model on central data with comprehensive metrics logging."""
-    global previous_weights, experiment_logger
+    global previous_weights, experiment_logger, current_round
+
+    # Update current round tracker
+    current_round = server_round
 
     # Load the model and initialize it with the received weights
     model = Net()

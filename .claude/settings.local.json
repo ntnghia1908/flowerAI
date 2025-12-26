@@ -11,7 +11,10 @@
       "Bash(timeout 120 python run_experiments.py:*)",
       "Bash(python scripts/test_labelskew.py:*)",
       "Bash(timeout 120 python:*)",
-      "Bash(timeout 15 sleep:*)"
+      "Bash(timeout 15 sleep:*)",
+      "Bash(tree:*)",
+      "Bash(flwr run:*)",
+      "Bash(conda run:*)"
     ]
   }
 }

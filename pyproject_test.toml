@@ -1,0 +1,37 @@
+# TEST CONFIGURATION - Quick test with 5 rounds
+[tool.flwr.app]
+publisher = "flwrlabs"
+[tool.flwr.app.components]
+serverapp = "pytorchexample.server_app_experiment:app"
+clientapp = "pytorchexample.client_app_experiment:app"
+
+[tool.flwr.app.config]
+# Server configuration
+num-server-rounds = 5  # Short test
+fraction-train = 1.0  # 100% - all 6 clients participate
+fraction-evaluate = 1.0  # 100% - all 6 clients evaluate
+min-train-nodes = 6  # All 6 clients train each round
+min-evaluate-nodes = 6  # All 6 clients evaluate each round
+
+# Client configuration
+local-epochs = 1
+learning-rate = 0.1
+batch-size = 32
+
+# Experiment configuration
+strategy = "FedAvg"
+distribution = "C2"  # Each client has 2 classes (label-skew)
+experiment-name = "test_evaluation_C2"
+num-clients = 6  # Fixed: 6 clients
+
+[tool.flwr.federations]
+default = "local-simulation"
+
+[tool.flwr.federations.local-simulation]
+options.num-supernodes = 6  # 6 clients
+
+[tool.flwr.federations.local-simulation-gpu]
+options.num-supernodes = 6  # 6 clients
+options.backend.client-resources.num-cpus = 2
+options.backend.client-resources.num-gpus = 0.2
+
