@@ -1,0 +1,13 @@
+Experiment: FedAvg_Dir1p0_C2
+Timestamp: 20251223_113004
+
+Configuration:
+strategy: FedAvg
+distribution: Dir(1.0)
+num_rounds: 500
+num_clients: 10
+fraction_train: 0.2
+fraction_evaluate: 0.2
+min_train_nodes: 2
+min_evaluate_nodes: 2
+learning_rate: 0.1

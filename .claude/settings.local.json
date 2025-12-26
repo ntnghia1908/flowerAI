@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python test_experiment.py:*)",
+      "Bash(python -c:*)",
+      "Bash(timeout 180 python:*)",
+      "Bash(timeout 200 python:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(python run_experiments.py:*)",
+      "Bash(timeout 120 python run_experiments.py:*)",
+      "Bash(python scripts/test_labelskew.py:*)",
+      "Bash(timeout 120 python:*)",
+      "Bash(timeout 15 sleep:*)"
+    ]
+  }
+}

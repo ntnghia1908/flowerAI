@@ -1,0 +1,13 @@
+Experiment: FedAvg_homo_C1
+Timestamp: 20251222_232129
+
+Configuration:
+strategy: FedAvg
+distribution: homo
+num_rounds: 500
+num_clients: 10
+fraction_train: 0.1
+fraction_evaluate: 0.1
+min_train_nodes: 1
+min_evaluate_nodes: 1
+learning_rate: 0.1

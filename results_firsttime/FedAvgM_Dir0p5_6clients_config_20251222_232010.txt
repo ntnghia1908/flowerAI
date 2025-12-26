@@ -1,0 +1,13 @@
+Experiment: FedAvgM_Dir0p5_6clients
+Timestamp: 20251222_232010
+
+Configuration:
+strategy: FedAvgM
+distribution: Dir(0.5)
+num_rounds: 100
+num_clients: 6
+fraction_train: 1.0
+fraction_evaluate: 1.0
+min_train_nodes: 6
+min_evaluate_nodes: 6
+learning_rate: 0.1
