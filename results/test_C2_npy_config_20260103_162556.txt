@@ -1,0 +1,14 @@
+Experiment: test_C2_npy
+Timestamp: 20260103_162556
+
+Configuration:
+strategy: FedAvg
+distribution: C2
+data_source: npy
+num_rounds: 3
+num_clients: 6
+fraction_train: 1.0
+fraction_evaluate: 1.0
+min_train_nodes: 6
+min_evaluate_nodes: 6
+learning_rate: 0.01

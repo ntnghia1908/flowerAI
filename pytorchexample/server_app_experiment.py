@@ -130,6 +130,7 @@ def main(grid: Grid, context: Context) -> None:
     # Experiment configuration
     strategy_name: str = context.run_config.get("strategy", "FedAvg")
     distribution: str = context.run_config.get("distribution", "homo")
+    data_source: str = context.run_config.get("data-source", "huggingface")
     experiment_name: str = context.run_config.get("experiment-name", f"{strategy_name}_{distribution}")
 
     # Initialize experiment logger
@@ -139,6 +140,7 @@ def main(grid: Grid, context: Context) -> None:
     config = {
         "strategy": strategy_name,
         "distribution": distribution,
+        "data_source": data_source,
         "num_rounds": num_rounds,
         "num_clients": num_clients,
         "fraction_train": fraction_train,
@@ -153,6 +155,7 @@ def main(grid: Grid, context: Context) -> None:
     print(f"Starting Experiment: {experiment_name}")
     print(f"Strategy: {strategy_name}")
     print(f"Distribution: {distribution}")
+    print(f"Data Source: {data_source.upper()}")
     print(f"Rounds: {num_rounds}")
     print(f"Clients: {num_clients} (train: {min_train_nodes}, eval: {min_evaluate_nodes})")
     print(f"{'='*60}\n")
@@ -172,12 +175,21 @@ def main(grid: Grid, context: Context) -> None:
     )
 
     # Start strategy, run FL for `num_rounds`
+    # Wrap evaluate_fn to pass data source parameters
+    def evaluate_fn_wrapper(server_round: int, arrays: ArrayRecord) -> MetricRecord:
+        return global_evaluate(
+            server_round, arrays,
+            data_source=data_source,
+            distribution=distribution,
+            num_clients=num_clients
+        )
+
     result = strategy.start(
         grid=grid,
         initial_arrays=arrays,
         train_config=ConfigRecord({"lr": lr}),
         num_rounds=num_rounds,
-        evaluate_fn=global_evaluate,
+        evaluate_fn=evaluate_fn_wrapper,
     )
 
     # Save final model to disk
@@ -196,7 +208,8 @@ def main(grid: Grid, context: Context) -> None:
     print(f"{'='*60}\n")
 
 
-def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
+def global_evaluate(server_round: int, arrays: ArrayRecord,
+                   data_source="huggingface", distribution="homo", num_clients=6) -> MetricRecord:
     """Evaluate model on central data with comprehensive metrics logging."""
     global previous_weights, experiment_logger, current_round, client_aggregate_metrics
 
@@ -210,8 +223,12 @@ def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    # Load entire test set
-    test_dataloader = load_centralized_dataset()
+    # Load entire test set (with data source option)
+    test_dataloader = load_centralized_dataset(
+        data_source=data_source,
+        distribution=distribution,
+        num_clients=num_clients
+    )
 
     # Calculate comprehensive metrics
     metrics = calculate_metrics(model, test_dataloader, device)

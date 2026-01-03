@@ -45,6 +45,7 @@ strategy = "FedAvg"
 distribution = "C2"  # Each client has 2 classes (label-skew)
 experiment-name = "FedAvg_C2"
 num-clients = 6  # Fixed: 6 clients
+data-source = "huggingface"  # "huggingface" or "npy"
 
 [tool.flwr.federations]
 default = "local-simulation"

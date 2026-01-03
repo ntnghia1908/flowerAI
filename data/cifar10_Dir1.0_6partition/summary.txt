@@ -1,0 +1,38 @@
+CIFAR-10 Federated Learning Dataset
+======================================================================
+
+Distribution: Dir1.0
+Number of clients: 6
+Test set samples: 10000
+
+Client Statistics:
+----------------------------------------------------------------------
+
+Partition 0:
+  Train samples: 10264
+  Val samples:   2566
+
+Partition 1:
+  Train samples: 6614
+  Val samples:   1654
+
+Partition 2:
+  Train samples: 7196
+  Val samples:   1800
+
+Partition 3:
+  Train samples: 3076
+  Val samples:   770
+
+Partition 4:
+  Train samples: 4814
+  Val samples:   1204
+
+Partition 5:
+  Train samples: 8033
+  Val samples:   2009
+
+----------------------------------------------------------------------
+Total train samples: 39997
+Total val samples:   10003
+Total samples:       50000

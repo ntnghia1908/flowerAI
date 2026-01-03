@@ -1,0 +1,14 @@
+# Test Dirichlet(0.5) - Moderate non-IID with pre-partitioned .npy data - 10 rounds
+num-server-rounds = 3
+fraction-train = 1.0
+fraction-evaluate = 1.0
+min-train-nodes = 6
+min-evaluate-nodes = 6
+local-epochs = 1
+learning-rate = 0.01
+batch-size = 32
+strategy = "FedAvg"
+distribution = "Dir0.5"
+experiment-name = "test_Dir0.5_npy"
+num-clients = 6
+data-source = "npy"

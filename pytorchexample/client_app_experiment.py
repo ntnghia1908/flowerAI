@@ -27,12 +27,18 @@ def train(msg: Message, context: Context):
     num_partitions = context.node_config["num-partitions"]
     batch_size = context.run_config["batch-size"]
     distribution = context.run_config.get("distribution", "homo")
+    data_source = context.run_config.get("data-source", "huggingface")
 
-    # Get appropriate partitioner
-    partitioner = get_partitioner(distribution, num_partitions)
+    # Get appropriate partitioner (only for HuggingFace mode)
+    partitioner = get_partitioner(distribution, num_partitions) if data_source == "huggingface" else None
 
-    # Load the data with specified partitioner
-    trainloader, _ = load_data(partition_id, num_partitions, batch_size, partitioner)
+    # Load the data with specified partitioner or from .npy
+    trainloader, _ = load_data(
+        partition_id, num_partitions, batch_size,
+        partitioner=partitioner,
+        data_source=data_source,
+        distribution=distribution
+    )
 
     # Call the training function
     train_loss = train_fn(
@@ -77,12 +83,18 @@ def evaluate(msg: Message, context: Context):
     num_partitions = context.node_config["num-partitions"]
     batch_size = context.run_config["batch-size"]
     distribution = context.run_config.get("distribution", "homo")
+    data_source = context.run_config.get("data-source", "huggingface")
 
-    # Get appropriate partitioner
-    partitioner = get_partitioner(distribution, num_partitions)
+    # Get appropriate partitioner (only for HuggingFace mode)
+    partitioner = get_partitioner(distribution, num_partitions) if data_source == "huggingface" else None
 
-    # Load the data with specified partitioner
-    _, valloader = load_data(partition_id, num_partitions, batch_size, partitioner)
+    # Load the data with specified partitioner or from .npy
+    _, valloader = load_data(
+        partition_id, num_partitions, batch_size,
+        partitioner=partitioner,
+        data_source=data_source,
+        distribution=distribution
+    )
 
     # Calculate comprehensive metrics on validation data
     eval_metrics = calculate_metrics(model, valloader, device)

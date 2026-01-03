@@ -1,0 +1,31 @@
+[tool.flwr.app]
+publisher = "flwrlabs"
+
+[tool.flwr.app.components]
+serverapp = "pytorchexample.server_app_npy:app"
+clientapp = "pytorchexample.client_app_npy:app"
+
+[tool.flwr.app.config]
+# Server configuration
+num-server-rounds = 10
+fraction-train = 1.0
+fraction-evaluate = 1.0
+min-train-nodes = 6
+min-evaluate-nodes = 6
+
+# Client configuration
+local-epochs = 1
+learning-rate = 0.01
+batch-size = 32
+
+# Experiment configuration
+strategy = "FedAvg"
+distribution = "homo"
+experiment-name = "test_homo_npy"
+num-clients = 6
+
+[tool.flwr.federations]
+default = "local-simulation"
+
+[tool.flwr.federations.local-simulation]
+options.num-supernodes = 6

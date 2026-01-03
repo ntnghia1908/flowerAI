@@ -49,10 +49,30 @@ def apply_transforms(batch):
     return batch
 
 
-def load_data(partition_id: int, num_partitions: int, batch_size: int, partitioner=None):
-    """Load partition CIFAR10 data."""
+def load_data(partition_id: int, num_partitions: int, batch_size: int, partitioner=None,
+              data_source="huggingface", distribution="homo"):
+    """Load partition CIFAR10 data.
+
+    Args:
+        partition_id: Client partition ID
+        num_partitions: Total number of partitions
+        batch_size: Batch size for DataLoader
+        partitioner: Partitioner object (for HuggingFace mode)
+        data_source: "huggingface" (default) or "npy"
+        distribution: Distribution name (for NPY mode), e.g. "homo", "C2", "Dir0.5"
+
+    Returns:
+        Tuple of (trainloader, testloader)
+    """
     global fds, _client_train_dataset
 
+    # NPY mode - use pre-partitioned .npy files
+    if data_source == "npy":
+        from pytorchexample.task_npy import load_npy_partition, get_data_dir
+        data_dir = get_data_dir(distribution, num_partitions, "./data")
+        return load_npy_partition(data_dir, partition_id, batch_size)
+
+    # HuggingFace mode - partition on-the-fly
     # Handle LabelSkewPartitioner differently (custom implementation)
     if isinstance(partitioner, LabelSkewPartitioner):
         # Load full CIFAR-10 train dataset (cached)
@@ -113,10 +133,26 @@ def reset_federated_dataset():
     _client_train_dataset = None
 
 
-def load_centralized_dataset():
-    """Load test set and return dataloader (cached)."""
+def load_centralized_dataset(data_source="huggingface", distribution="homo", num_clients=6):
+    """Load test set and return dataloader (cached).
+
+    Args:
+        data_source: "huggingface" (default) or "npy"
+        distribution: Distribution name (for NPY mode)
+        num_clients: Number of clients (for NPY mode)
+
+    Returns:
+        DataLoader for centralized test set
+    """
     global _centralized_test_dataloader
 
+    # NPY mode - use pre-partitioned .npy test set
+    if data_source == "npy":
+        from pytorchexample.task_npy import load_npy_centralized_test, get_data_dir
+        data_dir = get_data_dir(distribution, num_clients, "./data")
+        return load_npy_centralized_test(data_dir, batch_size=128)
+
+    # HuggingFace mode - load from HuggingFace datasets
     # Return cached dataloader if already loaded
     if _centralized_test_dataloader is not None:
         return _centralized_test_dataloader
