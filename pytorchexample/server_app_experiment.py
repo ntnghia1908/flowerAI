@@ -20,6 +20,7 @@ app = ServerApp()
 previous_weights = None
 experiment_logger = None
 current_round = 0
+client_aggregate_metrics = {'global_accuracy': 0.0, 'weighted_accuracy': 0.0}
 
 
 class CustomFedAvg(FedAvg):
@@ -58,7 +59,11 @@ class CustomFedAvg(FedAvg):
 
     def aggregate_evaluate(self, server_round, results):
         """Aggregate evaluation results and log client metrics."""
-        global current_round, experiment_logger
+        global current_round, experiment_logger, client_aggregate_metrics
+
+        # Initialize lists for collecting client metrics
+        client_accuracies = []
+        client_num_examples = []
 
         # Log client evaluation metrics
         if experiment_logger is not None:
@@ -77,6 +82,32 @@ class CustomFedAvg(FedAvg):
                     experiment_logger.log_client_metrics(
                         server_round, idx, 'evaluate', client_metrics
                     )
+
+                    # Collect data for aggregate metrics
+                    client_accuracies.append(metrics.get('eval_acc', 0.0))
+                    client_num_examples.append(metrics.get('num-examples', 0))
+
+        # Calculate aggregate metrics
+        N = len(client_accuracies)
+        if N > 0:
+            # Global Accuracy: (1/N) * Σ(Accuracy_k)
+            global_accuracy = sum(client_accuracies) / N
+
+            # Weighted Accuracy: Σ(n_k * Accuracy_k) / Σ(n_k)
+            total_examples = sum(client_num_examples)
+            if total_examples > 0:
+                weighted_accuracy = sum(acc * n for acc, n in zip(client_accuracies, client_num_examples)) / total_examples
+            else:
+                weighted_accuracy = 0.0
+        else:
+            global_accuracy = 0.0
+            weighted_accuracy = 0.0
+
+        # Store in global variable for use in global_evaluate()
+        client_aggregate_metrics = {
+            'global_accuracy': global_accuracy,
+            'weighted_accuracy': weighted_accuracy
+        }
 
         # Call parent aggregate_evaluate
         return super().aggregate_evaluate(server_round, results)
@@ -167,7 +198,7 @@ def main(grid: Grid, context: Context) -> None:
 
 def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
     """Evaluate model on central data with comprehensive metrics logging."""
-    global previous_weights, experiment_logger, current_round
+    global previous_weights, experiment_logger, current_round, client_aggregate_metrics
 
     # Update current round tracker
     current_round = server_round
@@ -193,7 +224,12 @@ def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
 
     # Log to CSV
     if experiment_logger is not None:
-        experiment_logger.log_global_metrics(server_round, metrics)
+        # Merge centralized metrics with client aggregate metrics
+        combined_metrics = {
+            **metrics,  # loss, accuracy, precision, recall, f1 from centralized test
+            **client_aggregate_metrics  # global_accuracy, weighted_accuracy from clients
+        }
+        experiment_logger.log_global_metrics(server_round, combined_metrics)
         experiment_logger.log_weight_metrics(server_round, weight_metrics)
 
     # Print progress
@@ -201,6 +237,8 @@ def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
           f"Loss: {metrics['loss']:.4f} | "
           f"Acc: {metrics['accuracy']:.4f} | "
           f"F1: {metrics['f1']:.4f} | "
+          f"Global Acc: {client_aggregate_metrics['global_accuracy']:.4f} | "
+          f"Weighted Acc: {client_aggregate_metrics['weighted_accuracy']:.4f} | "
           f"Weight Change: {weight_metrics['weight_relative_change']:.6f}")
 
     # Return metrics (Flower expects accuracy and loss keys)
@@ -210,6 +248,8 @@ def global_evaluate(server_round: int, arrays: ArrayRecord) -> MetricRecord:
         "precision": metrics['precision'],
         "recall": metrics['recall'],
         "f1": metrics['f1'],
+        "global_accuracy": client_aggregate_metrics['global_accuracy'],
+        "weighted_accuracy": client_aggregate_metrics['weighted_accuracy'],
         "weight_norm": weight_metrics['weight_norm'],
         "weight_change": weight_metrics['weight_change'],
         "weight_relative_change": weight_metrics['weight_relative_change'],

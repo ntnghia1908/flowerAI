@@ -14,7 +14,8 @@
       "Bash(timeout 15 sleep:*)",
       "Bash(tree:*)",
       "Bash(flwr run:*)",
-      "Bash(conda run:*)"
+      "Bash(conda run:*)",
+      "Bash(python run_all_tests.py:*)"
     ]
   }
 }

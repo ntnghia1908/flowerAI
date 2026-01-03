@@ -39,7 +39,8 @@ class ExperimentLogger:
         with open(self.global_csv, 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([
-                'round', 'loss', 'accuracy', 'precision', 'recall', 'f1'
+                'round', 'loss', 'accuracy', 'precision', 'recall', 'f1',
+                'global_accuracy', 'weighted_accuracy'
             ])
 
     def _init_client_csv(self):
@@ -64,7 +65,8 @@ class ExperimentLogger:
 
         Args:
             round_num: Current federated learning round
-            metrics: Dictionary with keys: loss, accuracy, precision, recall, f1
+            metrics: Dictionary with keys: loss, accuracy, precision, recall, f1,
+                     global_accuracy, weighted_accuracy
         """
         with open(self.global_csv, 'a', newline='') as f:
             writer = csv.writer(f)
@@ -74,7 +76,9 @@ class ExperimentLogger:
                 metrics.get('accuracy', 0.0),
                 metrics.get('precision', 0.0),
                 metrics.get('recall', 0.0),
-                metrics.get('f1', 0.0)
+                metrics.get('f1', 0.0),
+                metrics.get('global_accuracy', 0.0),
+                metrics.get('weighted_accuracy', 0.0)
             ])
 
     def log_client_metrics(

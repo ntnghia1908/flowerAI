@@ -10,6 +10,12 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, Normalize, ToTensor
 from pytorchexample.partitioner import LabelSkewPartitioner
 
+# Global cache for centralized test dataset
+_centralized_test_dataloader = None
+
+# Global cache for client train dataset (used by LabelSkewPartitioner)
+_client_train_dataset = None
+
 
 class Net(nn.Module):
     """Model (simple CNN adapted from 'PyTorch: A 60 Minute Blitz')"""
@@ -45,12 +51,16 @@ def apply_transforms(batch):
 
 def load_data(partition_id: int, num_partitions: int, batch_size: int, partitioner=None):
     """Load partition CIFAR10 data."""
-    global fds
+    global fds, _client_train_dataset
 
     # Handle LabelSkewPartitioner differently (custom implementation)
     if isinstance(partitioner, LabelSkewPartitioner):
-        # Load full CIFAR-10 train dataset
-        train_dataset = load_dataset("uoft-cs/cifar10", split="train")
+        # Load full CIFAR-10 train dataset (cached)
+        if _client_train_dataset is None:
+            import os
+            os.environ['HF_DATASETS_OFFLINE'] = '1'
+            _client_train_dataset = load_dataset("uoft-cs/cifar10", split="train")
+        train_dataset = _client_train_dataset
 
         # Get assigned classes for this partition
         assigned_classes = partitioner.get_partition_classes(partition_id)
@@ -98,16 +108,26 @@ def load_data(partition_id: int, num_partitions: int, batch_size: int, partition
 
 def reset_federated_dataset():
     """Reset the global FederatedDataset cache."""
-    global fds
+    global fds, _client_train_dataset
     fds = None
+    _client_train_dataset = None
 
 
 def load_centralized_dataset():
-    """Load test set and return dataloader."""
-    # Load entire test set
+    """Load test set and return dataloader (cached)."""
+    global _centralized_test_dataloader
+
+    # Return cached dataloader if already loaded
+    if _centralized_test_dataloader is not None:
+        return _centralized_test_dataloader
+
+    # Load entire test set (first time only)
+    import os
+    os.environ['HF_DATASETS_OFFLINE'] = '1'
     test_dataset = load_dataset("uoft-cs/cifar10", split="test")
     dataset = test_dataset.with_format("torch").with_transform(apply_transforms)
-    return DataLoader(dataset, batch_size=128)
+    _centralized_test_dataloader = DataLoader(dataset, batch_size=128)
+    return _centralized_test_dataloader
 
 
 def train(net, trainloader, epochs, lr, device):
