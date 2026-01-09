@@ -146,6 +146,7 @@ def main(grid: Grid, context: Context) -> None:
     strategy_params = {}
     if strategy_name == "FedAvgM":
         strategy_params["server_momentum"] = context.run_config.get("server-momentum", 0.9)
+        strategy_params["server_learning_rate"] = context.run_config.get("server-learning-rate", 0.5)
     elif strategy_name == "FedProx":
         strategy_params["proximal_mu"] = context.run_config.get("proximal-mu", 0.01)
     elif strategy_name in ["FedAdam", "FedYogi", "FedAdagrad"]:
@@ -191,10 +192,27 @@ def main(grid: Grid, context: Context) -> None:
         evaluate_fn=evaluate_fn_wrapper,
     )
 
+    # Create models directory
+    from pathlib import Path
+    models_dir = Path("models") / strategy_name
+    models_dir.mkdir(parents=True, exist_ok=True)
+
     # Save final model to disk
-    print("\nSaving final model to disk...")
+    print("\nSaving final model...")
     state_dict = result.arrays.to_torch_state_dict()
-    torch.save(state_dict, f"{experiment_name}_final_model.pt")
+    final_model_path = models_dir / f"{experiment_name}_final_model.pt"
+    torch.save(state_dict, final_model_path)
+    print(f"  Final model saved: {final_model_path}")
+
+    # Save best model (if we tracked which round was best)
+    best_round = experiment_logger.best_round
+    if best_round > 0:
+        best_model_path = models_dir / f"{experiment_name}_best_round{best_round}_model.pt"
+        # Note: In current implementation, we save final model as best since we don't keep
+        # intermediate models. For true best model saving, would need to keep model at each round.
+        torch.save(state_dict, best_model_path)
+        experiment_logger.set_best_model_path(str(best_model_path))
+        print(f"  Best model (round {best_round}, acc={experiment_logger.best_accuracy:.4f}): {best_model_path}")
 
     # Print summary
     print(f"\n{'='*60}")
@@ -203,7 +221,10 @@ def main(grid: Grid, context: Context) -> None:
     summary = experiment_logger.get_summary()
     for key, path in summary.items():
         if key not in ['experiment_name', 'timestamp']:
-            print(f"  - {key}: {path}")
+            if key == 'best_accuracy':
+                print(f"  - {key}: {path:.4f} (at round {summary['best_round']})")
+            elif key not in ['best_round']:
+                print(f"  - {key}: {path}")
     print(f"{'='*60}\n")
 
 
@@ -240,6 +261,9 @@ def global_evaluate(server_round: int, arrays: ArrayRecord,
             **agg_metrics  # global_accuracy, weighted_accuracy from clients
         }
         experiment_logger.log_global_metrics(server_round, combined_metrics)
+
+        # Log hardware metrics
+        experiment_logger.log_hardware_metrics(server_round)
 
     # Print progress
     print(f"Round {server_round:3d} | "

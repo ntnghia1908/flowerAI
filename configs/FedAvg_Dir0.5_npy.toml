@@ -13,3 +13,13 @@ experiment-name = "FedAvg_Dir0.5_npy"
 num-clients = 6
 data-source = "npy"
 
+# Strategy-specific parameters (declared in pyproject.toml)
+# All parameters must be declared in pyproject.toml even if not used by this strategy
+server-momentum = 0.9
+server-learning-rate = 0.5
+proximal-mu = 0.01
+eta = 0.01
+eta-l = 0.1
+tau = 1e-9
+beta-1 = 0.9
+beta-2 = 0.99

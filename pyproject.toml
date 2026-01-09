@@ -47,6 +47,21 @@ experiment-name = "test_homo"
 num-clients = 6  # Using 6 clients to match available data partitions
 data-source = "npy"  # "huggingface" or "npy"
 
+# Strategy-specific parameters (optional - only used by specific strategies)
+# FedAvgM parameters
+server-momentum = 0.9
+server-learning-rate = 0.5
+
+# FedProx parameters
+proximal-mu = 0.01
+
+# FedAdam, FedYogi, FedAdagrad parameters
+eta = 0.01
+eta-l = 0.1
+tau = 1e-9
+beta-1 = 0.9
+beta-2 = 0.99
+
 [tool.flwr.federations]
 default = "local-simulation"
 

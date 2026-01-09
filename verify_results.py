@@ -62,7 +62,8 @@ def verify_csv_file(csv_path, expected_type):
 
 def get_latest_csv_files(strategy, distribution, csv_type):
     """Get the latest CSV file for a strategy-distribution pair."""
-    pattern = f"results/{strategy}_{distribution}_npy_{csv_type}_*.csv"
+    # Updated to look in strategy subfolders
+    pattern = f"results/{strategy}/{strategy}_{distribution}_npy_{csv_type}_*.csv"
     files = sorted(Path('.').glob(pattern), key=lambda x: x.stat().st_mtime, reverse=True)
     return files[0] if files else None
 
@@ -115,10 +116,16 @@ def main():
                     message = "All metrics OK"
                     passed_experiments += 1
 
-                    # Get final metrics
+                    # Get final and best metrics
                     df_global = pd.read_csv(global_csv)
                     final_round = df_global.iloc[-1]
-                    message += f" | Final: Acc={final_round['accuracy']:.4f}, G_Acc={final_round['global_accuracy']:.4f}, W_Acc={final_round['weighted_accuracy']:.4f}"
+
+                    # Find best round based on global_accuracy
+                    best_idx = df_global[df_global['round'] > 0]['global_accuracy'].idxmax()
+                    best_round = df_global.loc[best_idx]
+
+                    message += f" | Best (R{int(best_round['round'])}): G_Acc={best_round['global_accuracy']:.4f}"
+                    message += f" | Final (R{int(final_round['round'])}): G_Acc={final_round['global_accuracy']:.4f}"
                 else:
                     status = "FAIL"
                     message = f"Client: {client_msg} | Global: {global_msg}"

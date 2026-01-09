@@ -22,7 +22,9 @@
       "Bash(dir results*client*.csv /b)",
       "Bash(tee:*)",
       "Bash(timeout 10 tail:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(flower-simulation:*)",
+      "Bash(timeout 900 cmd:*)"
     ]
   }
 }

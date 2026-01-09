@@ -15,8 +15,8 @@ if sys.platform == 'win32':
 # Set Ray environment variables for Windows compatibility
 os.environ['RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO'] = '0'
 
-# STRATEGIES = ["FedAvg", "FedAvgM", "FedProx", "FedAdam", "FedAdagrad", "FedYogi"]
-STRATEGIES = ["FedAvg"]
+STRATEGIES = [ "FedAvg", "FedAvgM", "FedProx", "FedAdam", "FedAdagrad", "FedYogi"]
+# STRATEGIES = ["FedAvg"]
 DISTRIBUTIONS = ["homo", "C2", "C3", "C4", "C5", "Dir0.1", "Dir0.5", "Dir1.0", "Dir10.0"]
 
 def run_experiment(strategy, distribution):
