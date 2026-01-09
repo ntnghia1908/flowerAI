@@ -1,0 +1,14 @@
+Experiment: test_homo_npy_lr0.001
+Timestamp: 20260103_155050
+
+Configuration:
+strategy: FedAvg
+distribution: homo
+data_source: npy
+num_rounds: 500
+num_clients: 6
+fraction_train: 1.0
+fraction_evaluate: 1.0
+min_train_nodes: 10
+min_evaluate_nodes: 10
+learning_rate: 0.001

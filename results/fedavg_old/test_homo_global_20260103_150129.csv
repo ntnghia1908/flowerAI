@@ -1,0 +1,2 @@
+round,loss,accuracy,precision,recall,f1,global_accuracy,weighted_accuracy
+0,2.3060567378997803,0.0998,0.014160652232023525,0.0998,0.018362222120991253,0.0,0.0

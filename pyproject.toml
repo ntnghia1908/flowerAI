@@ -32,29 +32,29 @@ clientapp = "pytorchexample.client_app_experiment:app"
 num-server-rounds = 500
 fraction-train = 1.0  # 100% - all 6 clients participate
 fraction-evaluate = 1.0  # 100% - all 6 clients evaluate
-min-train-nodes = 6  # All 6 clients train each round
-min-evaluate-nodes = 6  # All 6 clients evaluate each round
+min-train-nodes = 10  # All 10 clients train each round
+min-evaluate-nodes = 10  # All 10 clients evaluate each round
 
 # Client configuration
 local-epochs = 1
-learning-rate = 0.1
+learning-rate = 0.01
 batch-size = 32
 
 # Experiment configuration
 strategy = "FedAvg"
-distribution = "C2"  # Each client has 2 classes (label-skew)
-experiment-name = "FedAvg_C2"
-num-clients = 6  # Fixed: 6 clients
-data-source = "huggingface"  # "huggingface" or "npy"
+distribution = "homo"  # IID distribution for testing
+experiment-name = "test_homo"
+num-clients = 6  # Using 6 clients to match available data partitions
+data-source = "npy"  # "huggingface" or "npy"
 
 [tool.flwr.federations]
 default = "local-simulation"
 
 [tool.flwr.federations.local-simulation]
-options.num-supernodes = 6  # 6 clients
+options.num-supernodes = 6  # 6 clients to match data partitions
 
 [tool.flwr.federations.local-simulation-gpu]
-options.num-supernodes = 6  # 6 clients
+options.num-supernodes = 6  # 6 clients to match data partitions
 options.backend.client-resources.num-cpus = 2
 options.backend.client-resources.num-gpus = 0.2
 

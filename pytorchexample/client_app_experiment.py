@@ -40,6 +40,14 @@ def train(msg: Message, context: Context):
         distribution=distribution
     )
 
+    # Get proximal_mu from config (sent by FedProx strategy)
+    proximal_mu = msg.content["config"].get("proximal_mu", 0.0)
+
+    # Save global params if using FedProx
+    global_params = None
+    if proximal_mu > 0.0:
+        global_params = msg.content["arrays"].to_torch_state_dict()
+
     # Call the training function
     train_loss = train_fn(
         model,
@@ -47,6 +55,8 @@ def train(msg: Message, context: Context):
         context.run_config["local-epochs"],
         msg.content["config"]["lr"],
         device,
+        proximal_mu=proximal_mu,
+        global_params=global_params,
     )
 
     # Calculate comprehensive metrics on training data

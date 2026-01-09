@@ -18,7 +18,11 @@
       "Bash(python run_all_tests.py:*)",
       "Bash(python:*)",
       "Bash(grep:*)",
-      "Bash(timeout 120 flwr run:*)"
+      "Bash(timeout 120 flwr run:*)",
+      "Bash(dir results*client*.csv /b)",
+      "Bash(tee:*)",
+      "Bash(timeout 10 tail:*)",
+      "Bash(dir:*)"
     ]
   }
 }

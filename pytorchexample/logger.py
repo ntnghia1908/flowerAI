@@ -27,12 +27,10 @@ class ExperimentLogger:
         # CSV file paths
         self.global_csv = self.output_dir / f"{experiment_name}_global_{self.timestamp}.csv"
         self.client_csv = self.output_dir / f"{experiment_name}_client_{self.timestamp}.csv"
-        self.weight_csv = self.output_dir / f"{experiment_name}_weight_{self.timestamp}.csv"
 
         # Initialize CSV files with headers
         self._init_global_csv()
         self._init_client_csv()
-        self._init_weight_csv()
 
     def _init_global_csv(self):
         """Initialize global metrics CSV file."""
@@ -52,13 +50,6 @@ class ExperimentLogger:
                 'precision', 'recall', 'f1', 'num_examples'
             ])
 
-    def _init_weight_csv(self):
-        """Initialize weight metrics CSV file."""
-        with open(self.weight_csv, 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow([
-                'round', 'weight_norm', 'weight_change', 'weight_relative_change'
-            ])
 
     def log_global_metrics(self, round_num: int, metrics: Dict[str, float]):
         """Log global evaluation metrics.
@@ -110,21 +101,6 @@ class ExperimentLogger:
                 metrics.get('num_examples', 0)
             ])
 
-    def log_weight_metrics(self, round_num: int, metrics: Dict[str, float]):
-        """Log weight change metrics.
-
-        Args:
-            round_num: Current federated learning round
-            metrics: Dictionary with weight-related metrics
-        """
-        with open(self.weight_csv, 'a', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow([
-                round_num,
-                metrics.get('weight_norm', 0.0),
-                metrics.get('weight_change', 0.0),
-                metrics.get('weight_relative_change', 0.0)
-            ])
 
     def log_experiment_config(self, config: Dict[str, Any]):
         """Log experiment configuration to a separate file.
@@ -146,6 +122,5 @@ class ExperimentLogger:
             'experiment_name': self.experiment_name,
             'timestamp': self.timestamp,
             'global_csv': str(self.global_csv),
-            'client_csv': str(self.client_csv),
-            'weight_csv': str(self.weight_csv)
+            'client_csv': str(self.client_csv)
         }

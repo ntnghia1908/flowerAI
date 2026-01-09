@@ -1,0 +1,17 @@
+# FedAdagrad on Dir10.0 distribution
+num-server-rounds = 20
+fraction-train = 1.0
+fraction-evaluate = 1.0
+min-train-nodes = 6
+min-evaluate-nodes = 6
+local-epochs = 1
+learning-rate = 0.01
+batch-size = 32
+strategy = "FedAdagrad"
+distribution = "Dir10.0"
+experiment-name = "FedAdagrad_Dir10.0_npy"
+num-clients = 6
+data-source = "npy"
+eta = 0.01
+eta-l = 0.1
+tau = 1e-09

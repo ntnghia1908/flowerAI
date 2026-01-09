@@ -1,12 +1,12 @@
 """Federated Learning strategies for experiments."""
 
-from flwr.serverapp.strategy import (
-    FedAvg,
-    FedAvgM,
-    FedProx,
-    FedAdam,
-    FedAdagrad,
-    FedYogi,
+from pytorchexample.custom_strategies import (
+    FedAvgWithMetricsAggregation,
+    FedAvgMWithMetricsAggregation,
+    FedProxWithMetricsAggregation,
+    FedAdamWithMetricsAggregation,
+    FedAdagradWithMetricsAggregation,
+    FedYogiWithMetricsAggregation,
 )
 
 
@@ -34,11 +34,14 @@ def get_strategy(
         min_train_nodes: Minimum number of clients for training
         min_evaluate_nodes: Minimum number of clients for evaluation
         min_available_nodes: Minimum number of available clients
-        **kwargs: Additional strategy-specific parameters
+        **kwargs: Additional strategy-specific parameters including evaluate_metrics_aggregation_fn
 
     Returns:
         Strategy object from flwr.serverapp.strategy
     """
+    # Extract the callback function if provided
+    evaluate_metrics_agg_fn = kwargs.pop("evaluate_metrics_aggregation_fn", None)
+
     common_params = {
         "fraction_train": fraction_train,
         "fraction_evaluate": fraction_evaluate,
@@ -48,12 +51,16 @@ def get_strategy(
     }
 
     if strategy_name == "FedAvg":
-        return FedAvg(**common_params)
+        return FedAvgWithMetricsAggregation(
+            evaluate_metrics_aggregation_fn=evaluate_metrics_agg_fn,
+            **common_params
+        )
 
     elif strategy_name == "FedAvgM":
         # FedAvg with server-side momentum
         server_momentum = kwargs.get("server_momentum", 0.9)
-        return FedAvgM(
+        return FedAvgMWithMetricsAggregation(
+            evaluate_metrics_aggregation_fn=evaluate_metrics_agg_fn,
             **common_params,
             server_momentum=server_momentum
         )
@@ -61,7 +68,8 @@ def get_strategy(
     elif strategy_name == "FedProx":
         # FedAvg with proximal term to keep local models close to global
         proximal_mu = kwargs.get("proximal_mu", 0.01)
-        return FedProx(
+        return FedProxWithMetricsAggregation(
+            evaluate_metrics_aggregation_fn=evaluate_metrics_agg_fn,
             **common_params,
             proximal_mu=proximal_mu
         )
@@ -73,7 +81,8 @@ def get_strategy(
         beta_1 = kwargs.get("beta_1", 0.9)
         beta_2 = kwargs.get("beta_2", 0.99)
         tau = kwargs.get("tau", 1e-9)
-        return FedAdam(
+        return FedAdamWithMetricsAggregation(
+            evaluate_metrics_aggregation_fn=evaluate_metrics_agg_fn,
             **common_params,
             eta=eta,
             eta_l=eta_l,
@@ -87,7 +96,8 @@ def get_strategy(
         eta = kwargs.get("eta", 1e-2)
         eta_l = kwargs.get("eta_l", 1e-1)
         tau = kwargs.get("tau", 1e-9)
-        return FedAdagrad(
+        return FedAdagradWithMetricsAggregation(
+            evaluate_metrics_aggregation_fn=evaluate_metrics_agg_fn,
             **common_params,
             eta=eta,
             eta_l=eta_l,
@@ -101,7 +111,8 @@ def get_strategy(
         beta_1 = kwargs.get("beta_1", 0.9)
         beta_2 = kwargs.get("beta_2", 0.99)
         tau = kwargs.get("tau", 1e-9)
-        return FedYogi(
+        return FedYogiWithMetricsAggregation(
+            evaluate_metrics_aggregation_fn=evaluate_metrics_agg_fn,
             **common_params,
             eta=eta,
             eta_l=eta_l,
@@ -113,7 +124,10 @@ def get_strategy(
     # For strategies not yet implemented in Flower, fall back to FedAvg
     elif strategy_name in ["FedNova", "SCAFFOLD", "FiOFL", "FLOCO"]:
         print(f"Warning: {strategy_name} not implemented, using FedAvg instead")
-        return FedAvg(**common_params)
+        return FedAvgWithMetricsAggregation(
+            evaluate_metrics_aggregation_fn=evaluate_metrics_agg_fn,
+            **common_params
+        )
 
     else:
         raise ValueError(f"Unknown strategy: {strategy_name}")

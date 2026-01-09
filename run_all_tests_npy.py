@@ -12,14 +12,14 @@ os.environ['RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO'] = '0'
 # All test cases in order (NPY versions)
 TEST_CASES = [
     ('homo', 'configs/test_homo_npy.toml', 'Homogeneous (IID) - NPY'),
-    ('C2', 'configs/test_C2_npy.toml', 'Label Skew C2 (2 classes/client) - NPY'),
-    ('C3', 'configs/test_C3_npy.toml', 'Label Skew C3 (3 classes/client) - NPY'),
-    ('C4', 'configs/test_C4_npy.toml', 'Label Skew C4 (4 classes/client) - NPY'),
-    ('C5', 'configs/test_C5_npy.toml', 'Label Skew C5 (5 classes/client) - NPY'),
-    ('Dir0.1', 'configs/test_Dir0.1_npy.toml', 'Dirichlet(0.1) - Very non-IID - NPY'),
-    ('Dir0.5', 'configs/test_Dir0.5_npy.toml', 'Dirichlet(0.5) - Moderate non-IID - NPY'),
-    ('Dir1.0', 'configs/test_Dir1.0_npy.toml', 'Dirichlet(1.0) - Mild non-IID - NPY'),
-    ('Dir10.0', 'configs/test_Dir10.0_npy.toml', 'Dirichlet(10.0) - Nearly IID - NPY'),
+    # ('C2', 'configs/test_C2_npy.toml', 'Label Skew C2 (2 classes/client) - NPY'),
+    # ('C3', 'configs/test_C3_npy.toml', 'Label Skew C3 (3 classes/client) - NPY'),
+    # ('C4', 'configs/test_C4_npy.toml', 'Label Skew C4 (4 classes/client) - NPY'),
+    # ('C5', 'configs/test_C5_npy.toml', 'Label Skew C5 (5 classes/client) - NPY'),
+    # ('Dir0.1', 'configs/test_Dir0.1_npy.toml', 'Dirichlet(0.1) - Very non-IID - NPY'),
+    # ('Dir0.5', 'configs/test_Dir0.5_npy.toml', 'Dirichlet(0.5) - Moderate non-IID - NPY'),
+    # ('Dir1.0', 'configs/test_Dir1.0_npy.toml', 'Dirichlet(1.0) - Mild non-IID - NPY'),
+    # ('Dir10.0', 'configs/test_Dir10.0_npy.toml', 'Dirichlet(10.0) - Nearly IID - NPY'),
 ]
 
 

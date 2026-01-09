@@ -1,0 +1,15 @@
+# FedProx on homo distribution
+num-server-rounds = 20
+fraction-train = 1.0
+fraction-evaluate = 1.0
+min-train-nodes = 6
+min-evaluate-nodes = 6
+local-epochs = 1
+learning-rate = 0.01
+batch-size = 32
+strategy = "FedProx"
+distribution = "homo"
+experiment-name = "FedProx_homo_npy"
+num-clients = 6
+data-source = "npy"
+proximal-mu = 0.01

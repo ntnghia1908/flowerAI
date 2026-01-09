@@ -1,0 +1,19 @@
+# FedAdam on C3 distribution
+num-server-rounds = 20
+fraction-train = 1.0
+fraction-evaluate = 1.0
+min-train-nodes = 6
+min-evaluate-nodes = 6
+local-epochs = 1
+learning-rate = 0.01
+batch-size = 32
+strategy = "FedAdam"
+distribution = "C3"
+experiment-name = "FedAdam_C3_npy"
+num-clients = 6
+data-source = "npy"
+eta = 0.01
+eta-l = 0.1
+beta-1 = 0.9
+beta-2 = 0.99
+tau = 1e-09

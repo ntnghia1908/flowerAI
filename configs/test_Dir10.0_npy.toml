@@ -1,12 +1,12 @@
 # Test Dirichlet(10.0) - Nearly IID with pre-partitioned .npy data - 10 rounds
-num-server-rounds = 3
+num-server-rounds = 500
 fraction-train = 1.0
 fraction-evaluate = 1.0
 min-train-nodes = 6
 min-evaluate-nodes = 6
 local-epochs = 1
 learning-rate = 0.01
-batch-size = 32
+batch-size = 64
 strategy = "FedAvg"
 distribution = "Dir10.0"
 experiment-name = "test_Dir10.0_npy"

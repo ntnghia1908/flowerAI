@@ -166,11 +166,28 @@ def load_centralized_dataset(data_source="huggingface", distribution="homo", num
     return _centralized_test_dataloader
 
 
-def train(net, trainloader, epochs, lr, device):
-    """Train the model on the training set."""
+def train(net, trainloader, epochs, lr, device, proximal_mu=0.0, global_params=None):
+    """Train the model on the training set with optional FedProx proximal term.
+
+    Args:
+        net: Neural network model
+        trainloader: Training data loader
+        epochs: Number of local epochs
+        lr: Learning rate
+        device: torch device
+        proximal_mu: Proximal term coefficient (0.0 = standard training)
+        global_params: Global model parameters (required if proximal_mu > 0)
+    """
     net.to(device)  # move model to GPU if available
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9)
+
+    # Save global parameters for proximal term
+    global_params_dict = None
+    if proximal_mu > 0.0 and global_params is not None:
+        global_params_dict = {k: v.clone().detach().to(device)
+                              for k, v in global_params.items()}
+
     net.train()
     running_loss = 0.0
     for _ in range(epochs):
@@ -178,10 +195,23 @@ def train(net, trainloader, epochs, lr, device):
             images = batch["img"].to(device)
             labels = batch["label"].to(device)
             optimizer.zero_grad()
-            loss = criterion(net(images), labels)
+
+            # Standard cross-entropy loss
+            outputs = net(images)
+            loss = criterion(outputs, labels)
+
+            # Add proximal term for FedProx
+            if proximal_mu > 0.0 and global_params_dict is not None:
+                proximal_term = 0.0
+                for name, param in net.named_parameters():
+                    if name in global_params_dict:
+                        proximal_term += ((param - global_params_dict[name]) ** 2).sum()
+                loss += (proximal_mu / 2) * proximal_term
+
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
+
     avg_trainloss = running_loss / len(trainloader)
     return avg_trainloss
 

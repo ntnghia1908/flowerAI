@@ -13,14 +13,14 @@ os.environ['RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO'] = '0'
 TEST_CASES = [
     ('homo', 'configs/test_homo.toml', 'Homogeneous (IID)'),
     # ('C1', 'configs/test_C1.toml', 'Label Skew C1 (1 class/client)'),
-    ('C2', 'configs/test_C2.toml', 'Label Skew C2 (2 classes/client)'),
-    ('C3', 'configs/test_C3.toml', 'Label Skew C3 (3 classes/client)'),
-    ('C4', 'configs/test_C4.toml', 'Label Skew C4 (4 classes/client)'),
-    ('C5', 'configs/test_C5.toml', 'Label Skew C5 (5 classes/client)'),
-    ('Dir0.1', 'configs/test_Dir0p1.toml', 'Dirichlet(0.1) - Very non-IID'),
-    ('Dir0.5', 'configs/test_Dir0p5.toml', 'Dirichlet(0.5) - Moderate non-IID'),
-    ('Dir1.0', 'configs/test_Dir1p0.toml', 'Dirichlet(1.0) - Mild non-IID'),
-    ('Dir10.0', 'configs/test_Dir10p0.toml', 'Dirichlet(10.0) - Nearly IID'),
+    # ('C2', 'configs/test_C2.toml', 'Label Skew C2 (2 classes/client)'),
+    # ('C3', 'configs/test_C3.toml', 'Label Skew C3 (3 classes/client)'),
+    # ('C4', 'configs/test_C4.toml', 'Label Skew C4 (4 classes/client)'),
+    # ('C5', 'configs/test_C5.toml', 'Label Skew C5 (5 classes/client)'),
+    # ('Dir0.1', 'configs/test_Dir0p1.toml', 'Dirichlet(0.1) - Very non-IID'),
+    # ('Dir0.5', 'configs/test_Dir0p5.toml', 'Dirichlet(0.5) - Moderate non-IID'),
+    # ('Dir1.0', 'configs/test_Dir1p0.toml', 'Dirichlet(1.0) - Mild non-IID'),
+    # ('Dir10.0', 'configs/test_Dir10p0.toml', 'Dirichlet(10.0) - Nearly IID'),
 ]
 
 

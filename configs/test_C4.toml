@@ -2,12 +2,12 @@
 num-server-rounds = 500
 fraction-train = 1.0
 fraction-evaluate = 1.0
-min-train-nodes = 6
-min-evaluate-nodes = 6
+min-train-nodes = 10
+min-evaluate-nodes = 10
 local-epochs = 1
 learning-rate = 0.01
 batch-size = 32
 strategy = "FedAvg"
 distribution = "C4"
-experiment-name = "test_C4"
-num-clients = 6
+experiment-name = "test_C4_10clients"
+num-clients = 10

@@ -3,114 +3,88 @@
 import torch
 from flwr.app import ArrayRecord, ConfigRecord, Context, MetricRecord
 from flwr.serverapp import Grid, ServerApp
-from flwr.serverapp.strategy import FedAvg
 from flwr.common import ndarrays_to_parameters, parameters_to_ndarrays
 from copy import deepcopy
 from typing import List, Tuple, Dict, Optional
 
 from pytorchexample.task import Net, load_centralized_dataset
-from pytorchexample.metrics import calculate_metrics, calculate_weight_metrics
+from pytorchexample.metrics import calculate_metrics
 from pytorchexample.logger import ExperimentLogger
 from pytorchexample.strategies import get_strategy
 
 # Create ServerApp
 app = ServerApp()
 
-# Global variables for tracking
-previous_weights = None
+# Global variables for tracking - used for passing data between callbacks
 experiment_logger = None
 current_round = 0
 client_aggregate_metrics = {'global_accuracy': 0.0, 'weighted_accuracy': 0.0}
 
 
-class CustomFedAvg(FedAvg):
-    """Custom FedAvg with client metrics logging."""
+def create_evaluate_metrics_aggregation_fn(logger):
+    """Create callback function for aggregating evaluation metrics."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def evaluate_metrics_aggregation_fn(replies):
+        """Aggregate evaluation metrics from clients and log them."""
+        global client_aggregate_metrics, current_round
 
-    def aggregate_fit(self, server_round, results, failures):
-        """Aggregate training results and log client metrics."""
-        global current_round, experiment_logger
-
-        # Update current round
-        current_round = server_round
-
-        # Log client training metrics
-        if experiment_logger is not None:
-            for idx, result_msg in enumerate(results):
-                # Extract metrics from Message
-                if hasattr(result_msg, 'content') and 'metrics' in result_msg.content:
-                    metrics = result_msg.content['metrics']
-                    client_metrics = {
-                        'loss': metrics.get('train_loss', 0.0),
-                        'accuracy': metrics.get('train_accuracy', 0.0),
-                        'precision': metrics.get('train_precision', 0.0),
-                        'recall': metrics.get('train_recall', 0.0),
-                        'f1': metrics.get('train_f1', 0.0),
-                        'num_examples': metrics.get('num-examples', 0)
-                    }
-                    experiment_logger.log_client_metrics(
-                        server_round, idx, 'train', client_metrics
-                    )
-
-        # Call parent aggregate_fit
-        return super().aggregate_fit(server_round, results, failures)
-
-    def aggregate_evaluate(self, server_round, results):
-        """Aggregate evaluation results and log client metrics."""
-        global current_round, experiment_logger, client_aggregate_metrics
-
-        # Initialize lists for collecting client metrics
+        # Extract metrics from replies (each reply is a Message object)
         client_accuracies = []
         client_num_examples = []
 
-        # Log client evaluation metrics
-        if experiment_logger is not None:
-            for idx, result_msg in enumerate(results):
-                # Extract metrics from Message
-                if hasattr(result_msg, 'content') and 'metrics' in result_msg.content:
-                    metrics = result_msg.content['metrics']
-                    client_metrics = {
-                        'loss': metrics.get('eval_loss', 0.0),
-                        'accuracy': metrics.get('eval_acc', 0.0),
-                        'precision': metrics.get('eval_precision', 0.0),
-                        'recall': metrics.get('eval_recall', 0.0),
-                        'f1': metrics.get('eval_f1', 0.0),
-                        'num_examples': metrics.get('num-examples', 0)
-                    }
-                    experiment_logger.log_client_metrics(
-                        server_round, idx, 'evaluate', client_metrics
-                    )
+        # Convert to list to iterate multiple times
+        replies_list = list(replies)
 
-                    # Collect data for aggregate metrics
-                    client_accuracies.append(metrics.get('eval_acc', 0.0))
-                    client_num_examples.append(metrics.get('num-examples', 0))
+        # Replies is an iterable of Message objects
+        for idx, reply in enumerate(replies_list):
+            # Extract metrics from reply.content (RecordDict)
+            if hasattr(reply, 'content') and reply.content is not None:
+                record_dict = reply.content
+
+                # RecordDict has metrics_records attribute which is a dict
+                # The actual metrics are in record_dict.metrics_records['metrics'] as a plain dict
+                if hasattr(record_dict, 'metrics_records') and 'metrics' in record_dict.metrics_records:
+                    metrics_dict = record_dict.metrics_records['metrics']
+
+                    # num_examples is in the metrics dict with key 'num-examples'
+                    num_examples = metrics_dict.get('num-examples', 0)
+
+                    if logger is not None:
+                        # Log individual client metrics
+                        client_metrics = {
+                            'loss': metrics_dict.get('eval_loss', 0.0),
+                            'accuracy': metrics_dict.get('eval_acc', 0.0),
+                            'precision': metrics_dict.get('eval_precision', 0.0),
+                            'recall': metrics_dict.get('eval_recall', 0.0),
+                            'f1': metrics_dict.get('eval_f1', 0.0),
+                            'num_examples': num_examples
+                        }
+                        logger.log_client_metrics(current_round, idx, 'evaluate', client_metrics)
+
+                        # Collect for aggregate calculation
+                        client_accuracies.append(metrics_dict.get('eval_acc', 0.0))
+                        client_num_examples.append(num_examples)
 
         # Calculate aggregate metrics
         N = len(client_accuracies)
         if N > 0:
-            # Global Accuracy: (1/N) * Σ(Accuracy_k)
             global_accuracy = sum(client_accuracies) / N
-
-            # Weighted Accuracy: Σ(n_k * Accuracy_k) / Σ(n_k)
             total_examples = sum(client_num_examples)
-            if total_examples > 0:
-                weighted_accuracy = sum(acc * n for acc, n in zip(client_accuracies, client_num_examples)) / total_examples
-            else:
-                weighted_accuracy = 0.0
+            weighted_accuracy = sum(acc * n for acc, n in zip(client_accuracies, client_num_examples)) / total_examples if total_examples > 0 else 0.0
         else:
             global_accuracy = 0.0
             weighted_accuracy = 0.0
 
-        # Store in global variable for use in global_evaluate()
+        # Store for global_evaluate to use
         client_aggregate_metrics = {
             'global_accuracy': global_accuracy,
             'weighted_accuracy': weighted_accuracy
         }
 
-        # Call parent aggregate_evaluate
-        return super().aggregate_evaluate(server_round, results)
+        # Return aggregated metrics (Flower expects this)
+        return {}
+
+    return evaluate_metrics_aggregation_fn
 
 
 @app.main()
@@ -163,20 +137,45 @@ def main(grid: Grid, context: Context) -> None:
     # Load global model
     global_model = Net()
     arrays = ArrayRecord(global_model.state_dict())
-    previous_weights = deepcopy(global_model.state_dict())
+    # previous_weights = deepcopy(global_model.state_dict())
 
-    # Use custom FedAvg strategy with client metrics logging
-    strategy = CustomFedAvg(
+    # Read strategy parameters from config
+    strategy_name: str = context.run_config.get("strategy", "FedAvg")
+
+    # Strategy-specific parameters
+    strategy_params = {}
+    if strategy_name == "FedAvgM":
+        strategy_params["server_momentum"] = context.run_config.get("server-momentum", 0.9)
+    elif strategy_name == "FedProx":
+        strategy_params["proximal_mu"] = context.run_config.get("proximal-mu", 0.01)
+    elif strategy_name in ["FedAdam", "FedYogi", "FedAdagrad"]:
+        strategy_params["eta"] = context.run_config.get("eta", 0.01)
+        strategy_params["eta_l"] = context.run_config.get("eta-l", 0.1)
+        strategy_params["tau"] = context.run_config.get("tau", 1e-9)
+        if strategy_name in ["FedAdam", "FedYogi"]:
+            strategy_params["beta_1"] = context.run_config.get("beta-1", 0.9)
+            strategy_params["beta_2"] = context.run_config.get("beta-2", 0.99)
+
+    # Create evaluate metrics aggregation callback with logger
+    eval_metrics_agg_fn = create_evaluate_metrics_aggregation_fn(experiment_logger)
+
+    # Create strategy using factory with metrics aggregation callback
+    strategy = get_strategy(
+        strategy_name=strategy_name,
         fraction_train=fraction_train,
         fraction_evaluate=fraction_evaluate,
         min_train_nodes=min_train_nodes,
         min_evaluate_nodes=min_evaluate_nodes,
         min_available_nodes=num_clients,
+        evaluate_metrics_aggregation_fn=eval_metrics_agg_fn,
+        **strategy_params
     )
 
     # Start strategy, run FL for `num_rounds`
     # Wrap evaluate_fn to pass data source parameters
     def evaluate_fn_wrapper(server_round: int, arrays: ArrayRecord) -> MetricRecord:
+        global current_round
+        current_round = server_round
         return global_evaluate(
             server_round, arrays,
             data_source=data_source,
@@ -211,10 +210,7 @@ def main(grid: Grid, context: Context) -> None:
 def global_evaluate(server_round: int, arrays: ArrayRecord,
                    data_source="huggingface", distribution="homo", num_clients=6) -> MetricRecord:
     """Evaluate model on central data with comprehensive metrics logging."""
-    global previous_weights, experiment_logger, current_round, client_aggregate_metrics
-
-    # Update current round tracker
-    current_round = server_round
+    global experiment_logger, client_aggregate_metrics
 
     # Load the model and initialize it with the received weights
     model = Net()
@@ -233,30 +229,25 @@ def global_evaluate(server_round: int, arrays: ArrayRecord,
     # Calculate comprehensive metrics
     metrics = calculate_metrics(model, test_dataloader, device)
 
-    # Calculate weight metrics
-    weight_metrics = calculate_weight_metrics(current_weights, previous_weights)
-
-    # Update previous weights
-    previous_weights = deepcopy(current_weights)
+    # Get client aggregate metrics from global variable (set by callback)
+    agg_metrics = client_aggregate_metrics
 
     # Log to CSV
     if experiment_logger is not None:
         # Merge centralized metrics with client aggregate metrics
         combined_metrics = {
             **metrics,  # loss, accuracy, precision, recall, f1 from centralized test
-            **client_aggregate_metrics  # global_accuracy, weighted_accuracy from clients
+            **agg_metrics  # global_accuracy, weighted_accuracy from clients
         }
         experiment_logger.log_global_metrics(server_round, combined_metrics)
-        experiment_logger.log_weight_metrics(server_round, weight_metrics)
 
     # Print progress
     print(f"Round {server_round:3d} | "
           f"Loss: {metrics['loss']:.4f} | "
           f"Acc: {metrics['accuracy']:.4f} | "
           f"F1: {metrics['f1']:.4f} | "
-          f"Global Acc: {client_aggregate_metrics['global_accuracy']:.4f} | "
-          f"Weighted Acc: {client_aggregate_metrics['weighted_accuracy']:.4f} | "
-          f"Weight Change: {weight_metrics['weight_relative_change']:.6f}")
+          f"Global Acc: {agg_metrics['global_accuracy']:.4f} | "
+          f"Weighted Acc: {agg_metrics['weighted_accuracy']:.4f}" )
 
     # Return metrics (Flower expects accuracy and loss keys)
     return MetricRecord({
@@ -265,9 +256,6 @@ def global_evaluate(server_round: int, arrays: ArrayRecord,
         "precision": metrics['precision'],
         "recall": metrics['recall'],
         "f1": metrics['f1'],
-        "global_accuracy": client_aggregate_metrics['global_accuracy'],
-        "weighted_accuracy": client_aggregate_metrics['weighted_accuracy'],
-        "weight_norm": weight_metrics['weight_norm'],
-        "weight_change": weight_metrics['weight_change'],
-        "weight_relative_change": weight_metrics['weight_relative_change'],
+        "global_accuracy": agg_metrics['global_accuracy'],
+        "weighted_accuracy": agg_metrics['weighted_accuracy'],
     })
