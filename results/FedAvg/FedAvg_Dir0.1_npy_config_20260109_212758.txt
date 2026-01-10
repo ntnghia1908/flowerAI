@@ -1,0 +1,14 @@
+Experiment: FedAvg_Dir0.1_npy
+Timestamp: 20260109_212758
+
+Configuration:
+strategy: FedAvg
+distribution: Dir0.1
+data_source: npy
+num_rounds: 500
+num_clients: 6
+fraction_train: 1.0
+fraction_evaluate: 1.0
+min_train_nodes: 6
+min_evaluate_nodes: 6
+learning_rate: 0.01

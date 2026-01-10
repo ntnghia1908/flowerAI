@@ -1,0 +1,26 @@
+# FedNova on Dir0.1 distribution
+num-server-rounds = 500
+fraction-train = 1.0
+fraction-evaluate = 1.0
+min-train-nodes = 6
+min-evaluate-nodes = 6
+local-epochs = 1
+learning-rate = 0.01
+batch-size = 64
+strategy = "FedNova"
+distribution = "Dir0.1"
+experiment-name = "FedNova_Dir0.1_npy"
+num-clients = 6
+data-source = "npy"
+
+# Strategy-specific parameters (declared in pyproject.toml)
+# All parameters must be declared in pyproject.toml even if not used by this strategy
+server-momentum = 0.9
+server-learning-rate = 0.5
+proximal-mu = 0.01
+eta = 0.01
+eta-l = 0.1
+tau = 1e-9
+beta-1 = 0.9
+beta-2 = 0.99
+var-local-epochs = false

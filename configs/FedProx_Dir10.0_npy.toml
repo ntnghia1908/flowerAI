@@ -23,3 +23,4 @@ eta-l = 0.1
 tau = 1e-9
 beta-1 = 0.9
 beta-2 = 0.99
+var-local-epochs = false

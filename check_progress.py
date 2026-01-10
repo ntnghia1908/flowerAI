@@ -12,8 +12,8 @@ if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
-STRATEGIES = ["FedAvg", "FedAvgM", "FedProx", "FedAdam", "FedAdagrad", "FedYogi"]
-TOTAL_EXPERIMENTS = 54
+STRATEGIES = ["FedAvg", "FedAvgM", "FedProx", "FedAdam", "FedAdagrad", "FedYogi", "FedNova", "SCAFFOLD"]
+TOTAL_EXPERIMENTS = 72  # 8 strategies × 9 distributions
 
 def count_completed_experiments():
     """Count completed experiments by strategy."""

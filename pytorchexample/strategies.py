@@ -7,6 +7,8 @@ from pytorchexample.custom_strategies import (
     FedAdamWithMetricsAggregation,
     FedAdagradWithMetricsAggregation,
     FedYogiWithMetricsAggregation,
+    FedNovaWithMetricsAggregation,
+    SCAFFOLDWithMetricsAggregation,
 )
 
 
@@ -59,10 +61,12 @@ def get_strategy(
     elif strategy_name == "FedAvgM":
         # FedAvg with server-side momentum
         server_momentum = kwargs.get("server_momentum", 0.9)
+        server_learning_rate = kwargs.get("server_learning_rate", 0.5)
         return FedAvgMWithMetricsAggregation(
             evaluate_metrics_aggregation_fn=evaluate_metrics_agg_fn,
             **common_params,
-            server_momentum=server_momentum
+            server_momentum=server_momentum,
+            server_learning_rate=server_learning_rate
         )
 
     elif strategy_name == "FedProx":
@@ -121,8 +125,24 @@ def get_strategy(
             tau=tau
         )
 
+    elif strategy_name == "FedNova":
+        # Federated Normalized Averaging
+        var_local_epochs = kwargs.get("var_local_epochs", False)
+        return FedNovaWithMetricsAggregation(
+            evaluate_metrics_aggregation_fn=evaluate_metrics_agg_fn,
+            **common_params,
+            var_local_epochs=var_local_epochs
+        )
+
+    elif strategy_name == "SCAFFOLD":
+        # Stochastic Controlled Averaging for Federated Learning
+        return SCAFFOLDWithMetricsAggregation(
+            evaluate_metrics_aggregation_fn=evaluate_metrics_agg_fn,
+            **common_params
+        )
+
     # For strategies not yet implemented in Flower, fall back to FedAvg
-    elif strategy_name in ["FedNova", "SCAFFOLD", "FiOFL", "FLOCO"]:
+    elif strategy_name in ["FiOFL", "FLOCO"]:
         print(f"Warning: {strategy_name} not implemented, using FedAvg instead")
         return FedAvgWithMetricsAggregation(
             evaluate_metrics_aggregation_fn=evaluate_metrics_agg_fn,
@@ -142,9 +162,9 @@ def get_available_strategies():
         "FedAdam",
         "FedAdagrad",
         "FedYogi",
-        # Not yet implemented in Flower
-        # "FedNova",
-        # "SCAFFOLD",
+        "FedNova",
+        "SCAFFOLD",
+        # Not yet implemented
         # "FiOFL",
         # "FLOCO",
     ]

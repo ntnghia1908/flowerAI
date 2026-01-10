@@ -63,6 +63,12 @@ def train(msg: Message, context: Context):
     train_metrics = calculate_metrics(model, trainloader, device)
     train_metrics['num_examples'] = len(trainloader.dataset)
 
+    # Calculate tau (number of local SGD steps) for FedNova
+    # tau = local_epochs * number_of_batches
+    num_batches = len(trainloader)
+    local_epochs = context.run_config["local-epochs"]
+    tau = local_epochs * num_batches
+
     # Construct and return reply Message
     model_record = ArrayRecord(model.state_dict())
     metrics = {
@@ -72,6 +78,7 @@ def train(msg: Message, context: Context):
         "train_recall": train_metrics['recall'],
         "train_f1": train_metrics['f1'],
         "num-examples": len(trainloader.dataset),
+        "tau": float(tau),  # Report tau for FedNova
     }
     metric_record = MetricRecord(metrics)
     content = RecordDict({"arrays": model_record, "metrics": metric_record})
