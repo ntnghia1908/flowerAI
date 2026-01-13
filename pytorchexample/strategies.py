@@ -9,6 +9,7 @@ from pytorchexample.custom_strategies import (
     FedYogiWithMetricsAggregation,
     FedNovaWithMetricsAggregation,
     SCAFFOLDWithMetricsAggregation,
+    FedBNWithMetricsAggregation,
 )
 
 
@@ -141,6 +142,14 @@ def get_strategy(
             **common_params
         )
 
+    elif strategy_name == "FedBN":
+        # FedBN: Keep BatchNorm layers local, aggregate rest
+        # Note: Current model has no BN layers, but implementation is ready
+        return FedBNWithMetricsAggregation(
+            evaluate_metrics_aggregation_fn=evaluate_metrics_agg_fn,
+            **common_params
+        )
+
     # For strategies not yet implemented in Flower, fall back to FedAvg
     elif strategy_name in ["FiOFL", "FLOCO"]:
         print(f"Warning: {strategy_name} not implemented, using FedAvg instead")
@@ -164,6 +173,7 @@ def get_available_strategies():
         "FedYogi",
         "FedNova",
         "SCAFFOLD",
+        "FedBN",
         # Not yet implemented
         # "FiOFL",
         # "FLOCO",

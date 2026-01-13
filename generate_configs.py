@@ -11,6 +11,7 @@ STRATEGIES = {
     "FedYogi": {"eta": 0.01, "eta-l": 0.1, "beta-1": 0.9, "beta-2": 0.99, "tau": 1e-9},
     "FedNova": {"var-local-epochs": False},
     "SCAFFOLD": {},
+    "FedBN": {},
 }
 
 DISTRIBUTIONS = ["homo", "C2", "C3", "C4", "C5", "Dir0.1", "Dir0.5", "Dir1.0", "Dir10.0"]

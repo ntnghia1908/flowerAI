@@ -11,7 +11,7 @@ if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
-STRATEGIES = ["FedAvg", "FedAvgM", "FedProx", "FedAdam", "FedAdagrad", "FedYogi", "FedNova", "SCAFFOLD"]
+STRATEGIES = ["FedAvg", "FedAvgM", "FedProx", "FedAdam", "FedAdagrad", "FedYogi", "FedNova", "SCAFFOLD", "FedBN"]
 DISTRIBUTIONS = ["homo", "C2", "C3", "C4", "C5", "Dir0.1", "Dir0.5", "Dir1.0", "Dir10.0"]
 
 

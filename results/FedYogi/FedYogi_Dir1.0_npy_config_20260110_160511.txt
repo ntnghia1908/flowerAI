@@ -1,0 +1,14 @@
+Experiment: FedYogi_Dir1.0_npy
+Timestamp: 20260110_160511
+
+Configuration:
+strategy: FedYogi
+distribution: Dir1.0
+data_source: npy
+num_rounds: 500
+num_clients: 6
+fraction_train: 1.0
+fraction_evaluate: 1.0
+min_train_nodes: 6
+min_evaluate_nodes: 6
+learning_rate: 0.01

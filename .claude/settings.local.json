@@ -25,7 +25,24 @@
       "Bash(dir:*)",
       "Bash(flower-simulation:*)",
       "Bash(timeout 900 cmd:*)",
-      "Bash(timeout 180 flwr run:*)"
+      "Bash(timeout 180 flwr run:*)",
+      "Bash(move datacifar10_C2_6partition databackup_old_partitions )",
+      "Bash(move datacifar10_C3_6partition databackup_old_partitions )",
+      "Bash(move datacifar10_C4_6partition databackup_old_partitions )",
+      "Bash(move datacifar10_C5_6partition databackup_old_partitions )",
+      "Bash(cmd /c:*)",
+      "Bash(timeout 300 flwr run:*)",
+      "Bash(flwr:*)",
+      "Bash(wsl bash:*)",
+      "Bash(source:*)",
+      "Bash(/c/Program Files/Python310/python.exe --version)",
+      "Bash(for file in npy_*.yaml)",
+      "Bash(do sed -i 's|/mnt/c/Users|C:/Users|g' \"$file\")",
+      "Bash(done)",
+      "Bash(/c/Program Files/Python310/python.exe -c \"import flwr; import torch; import hydra; print\\(''All imports OK''\\)\")",
+      "Bash(/c/Program Files/Python310/python.exe -m pip install:*)",
+      "Bash(for dist in C2 C3 C4 C5 Dir0.1 Dir0.5 Dir1.0 Dir10.0)",
+      "Bash(do echo \"========== Testing $dist ==========\")"
     ]
   }
 }

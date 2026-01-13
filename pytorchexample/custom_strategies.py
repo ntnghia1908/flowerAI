@@ -6,6 +6,7 @@ from flwr.serverapp.strategy import (
 )
 from pytorchexample.fednova_strategy import FedNova
 from pytorchexample.scaffold_strategy import SCAFFOLD
+from pytorchexample.fedbn_strategy import FedBN
 
 
 class FedAvgWithMetricsAggregation(FedAvg):
@@ -133,6 +134,23 @@ class FedNovaWithMetricsAggregation(FedNova):
 
 class SCAFFOLDWithMetricsAggregation(SCAFFOLD):
     """SCAFFOLD with support for evaluate_metrics_aggregation_fn callback."""
+
+    def __init__(
+        self,
+        evaluate_metrics_aggregation_fn: Optional[Callable] = None,
+        **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.evaluate_metrics_aggregation_fn = evaluate_metrics_aggregation_fn
+
+    def aggregate_evaluate(self, server_round: int, replies):
+        if self.evaluate_metrics_aggregation_fn is not None:
+            self.evaluate_metrics_aggregation_fn(replies)
+        return super().aggregate_evaluate(server_round, replies)
+
+
+class FedBNWithMetricsAggregation(FedBN):
+    """FedBN with support for evaluate_metrics_aggregation_fn callback."""
 
     def __init__(
         self,
